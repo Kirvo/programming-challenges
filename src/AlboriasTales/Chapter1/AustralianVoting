@@ -1,4 +1,4 @@
-package AlboriasTales;
+package AlboriasTales.Chapter1;
 
 import java.util.Scanner;
 import java.util.InputMismatchException;
@@ -85,4 +85,4 @@ class AustralianVoting {
         int[] votes = new int[1];
         return votes;
     }
-} 
+}
