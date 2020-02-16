@@ -1,5 +1,7 @@
 package AlboriasTales.Chapter1;
 
+// @JUDGE_ID:  1000AA  100  Java  "Easy algorithm"
+
 import java.util.Scanner;
 import java.util.InputMismatchException;
 
@@ -14,32 +16,33 @@ class AustralianVoting {
 
         for(int i = 0; i < cases; i++) {
             int numOfCandidates = getNumOfCandidates(input);
+            System.out.println("Num of candidates is: " + numOfCandidates);
+
             String[] candidates = getCandidates(numOfCandidates, input);
-            int[] votes = getVotes(input);
 
-
-            System.out.println(candidates[0]);
-            System.out.println(candidates[1]);
+            int[][] votes = getVotes(numOfCandidates, input);
         }
     }
 
     private static int getCases(Scanner input) {
         int cases = -1;
-        do {
+
+        while (cases == -1) {
             try {
                 cases = input.nextInt();
             } catch(InputMismatchException e) {
                 System.err.println("This is not a number, try again!");
                 continue;
             }
-        } while (cases == -1);
+        }
 
         return cases;
     }
 
     private static int getNumOfCandidates(Scanner input) {
         int numOfCandidates = -1;
-        do {
+
+        while(numOfCandidates > 20 || numOfCandidates == -1) {
             try {
                 numOfCandidates = input.nextInt();
 
@@ -51,9 +54,7 @@ class AustralianVoting {
             } catch(InputMismatchException e) {
                 System.err.println("This is not a number, try again!");
             }
-
         }
-        while(numOfCandidates > 20 || numOfCandidates == -1);
 
         return numOfCandidates;
     }
@@ -64,25 +65,45 @@ class AustralianVoting {
 
         while(count < numOfCandidates) {
             String name = "ERROR";
-            do {
-                name = input.next();
-                System.out.println("Input is " + name);
+
+            while (name == "ERROR") {
+                name = input.nextLine();
+                if(name.length() == 0) name = "ERROR";
 
                 if(name.length() > 80) {
                     System.err.println("Names must be less than 80 characters. Try again");
                     name = "ERROR";
-                    continue;
                 }
-            } while (name == "ERROR");
-            System.out.println("Count value: " + count);
+
+            }
             candidates[count++] = name;
         }
 
         return candidates;
     }
 
-    private static int[] getVotes(Scanner input) {
-        int[] votes = new int[1];
+    /**
+     * Falta verificar que los datos enviados son válidos!
+     * @param input
+     * @param numOfCandidates
+     * @return
+     */
+    private static int[][] getVotes(int numOfCandidates, Scanner input) {
+        int[][] votes = new int[1000][numOfCandidates];
+        int cont = 0;
+        String line = input.nextLine();
+
+        while (!line.isEmpty()) {
+            line = line.replaceAll("\\s+","");
+
+            for(int i = 0; i < line.length(); i++) {
+                votes[cont][i] = line.charAt(i);
+            }
+
+            cont++;
+            line = input.nextLine();
+        }
+
         return votes;
     }
 }

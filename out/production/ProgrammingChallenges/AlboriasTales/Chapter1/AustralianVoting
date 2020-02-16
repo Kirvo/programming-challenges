@@ -1,10 +1,11 @@
-package AlboriasTales;
+package AlboriasTales.Chapter1;
 
-import java.util.InputMismatchException;
+// @JUDGE_ID:  1000AA  100  Java  "Easy algorithm"
+
 import java.util.Scanner;
+import java.util.InputMismatchException;
 
-public class Main {
-
+class AustralianVoting {
     public static void main(String[] args) {
         System.out.println("Hello world!");
         Scanner input = new Scanner(System.in);
@@ -18,7 +19,9 @@ public class Main {
             String[] candidates = getCandidates(numOfCandidates, input);
             int[][] votes = getVotes(numOfCandidates, input);
 
-            String[] winners = getWinner(votes, candidates);
+
+            System.out.println(candidates[0]);
+            System.out.println(candidates[1]);
         }
     }
 
@@ -65,15 +68,14 @@ public class Main {
             String name = "ERROR";
 
             while (name == "ERROR") {
-                name = input.nextLine();
-                if(name.length() == 0) name = "ERROR";
+                name = input.next();
 
                 if(name.length() > 80) {
                     System.err.println("Names must be less than 80 characters. Try again");
                     name = "ERROR";
                 }
-
             }
+
             candidates[count++] = name;
         }
 
@@ -90,9 +92,8 @@ public class Main {
         int[][] votes = new int[1000][numOfCandidates];
         int cont = 0;
         String line = input.nextLine();
-
-        while (!line.isEmpty()) {
-            line = line.replaceAll("\\s+","");
+        while (line != "") {
+            line = line.trim();
 
             for(int i = 0; i < line.length(); i++) {
                 votes[cont][i] = line.charAt(i);
@@ -103,30 +104,5 @@ public class Main {
         }
 
         return votes;
-    }
-
-    private static String[] getWinner(int[][] votes, String[] candidates) {
-        String[] winners = new String[candidates.length];
-        int[] voteCount;
-        boolean goon = false;
-        int cont = 0;
-
-        while(goon) {
-            voteCount = new int[candidates.length];
-
-            for(int i = 0; i < votes.length; i++) {
-               voteCount[votes[i][cont] - 1]++;
-            }
-
-            int indexOfWinner = -1; int max = 0; int min = candidates.length;
-            for(int i = 0; i < voteCount.length; i++) {
-                if(voteCount[i] >= max) { max = voteCount[i]; indexOfWinner = i; }
-                if(voteCount[i] <= min) { min = voteCount[i]; }
-            }
-
-            if(max == min) { /* xd */ }
-        }
-
-        return winners;
     }
 }
