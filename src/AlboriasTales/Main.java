@@ -1,12 +1,13 @@
 package AlboriasTales;
 
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Hello world!");
         Scanner input = new Scanner(System.in);
 
         int cases = getCases(input);
@@ -16,9 +17,11 @@ public class Main {
         for(int i = 0; i < cases; i++) {
             int numOfCandidates = getNumOfCandidates(input);
             String[] candidates = getCandidates(numOfCandidates, input);
-            int[][] votes = getVotes(numOfCandidates, input);
+            ArrayList<int[]> votes = getVotes(numOfCandidates, input);
 
-            String[] winners = getWinner(votes, candidates);
+            ArrayList<String> winners = getWinner(votes, candidates);
+            winners.forEach(System.out::println);
+            System.out.println();
         }
     }
 
@@ -30,7 +33,6 @@ public class Main {
                 cases = input.nextInt();
             } catch(InputMismatchException e) {
                 System.err.println("This is not a number, try again!");
-                continue;
             }
         }
 
@@ -46,7 +48,6 @@ public class Main {
 
                 if(numOfCandidates > 20) {
                     System.err.println("There can only be 20 or less candidates, try again!");
-                    continue;
                 }
 
             } catch(InputMismatchException e) {
@@ -64,7 +65,7 @@ public class Main {
         while(count < numOfCandidates) {
             String name = "ERROR";
 
-            while (name == "ERROR") {
+            while (name.equals("ERROR")) {
                 name = input.nextLine();
                 if(name.length() == 0) name = "ERROR";
 
@@ -80,51 +81,66 @@ public class Main {
         return candidates;
     }
 
-    /**
-     * Falta verificar que los datos enviados son válidos!
-     * @param input
-     * @param numOfCandidates
-     * @return
-     */
-    private static int[][] getVotes(int numOfCandidates, Scanner input) {
-        int[][] votes = new int[1000][numOfCandidates];
-        int cont = 0;
+    private static ArrayList<int[]> getVotes(int numOfCandidates, Scanner input) {
+        ArrayList<int[]> votes = new ArrayList<>();
         String line = input.nextLine();
 
         while (!line.isEmpty()) {
-            line = line.replaceAll("\\s+","");
+            int[] newVotes = new int[numOfCandidates];
+            line = line.trim(); // prevencion de errores
+            String[] numbers = line.split(" ");
 
-            for(int i = 0; i < line.length(); i++) {
-                votes[cont][i] = line.charAt(i);
+            for(int i = 0; i < numOfCandidates; i++) {
+                newVotes[i] = Integer.parseInt(numbers[i]);
+                if(newVotes[i] == -1) { System.err.println("ESTO NO ES UN NUMERO"); break; }
             }
 
-            cont++;
+            votes.add(newVotes);
             line = input.nextLine();
+
+            if(votes.size() >= 1000) { break; }
         }
 
         return votes;
     }
 
-    private static String[] getWinner(int[][] votes, String[] candidates) {
-        String[] winners = new String[candidates.length];
+    private static ArrayList<String> getWinner(ArrayList<int[]> votes, String[] candidates) {
+        ArrayList<String> winners = new ArrayList<>();
+        ArrayList<Integer> eliminated = new ArrayList<>();
         int[] voteCount;
-        boolean goon = false;
+        boolean goon = true;
         int cont = 0;
 
         while(goon) {
             voteCount = new int[candidates.length];
 
-            for(int i = 0; i < votes.length; i++) {
-               voteCount[votes[i][cont] - 1]++;
+            for (int[] vote : votes) {
+                voteCount[vote[cont] - 1]++;
             }
 
-            int indexOfWinner = -1; int max = 0; int min = candidates.length;
+            int max = 0, min = candidates.length;
             for(int i = 0; i < voteCount.length; i++) {
-                if(voteCount[i] >= max) { max = voteCount[i]; indexOfWinner = i; }
+                // Si el candidato se ha eliminado, resetamos su contador de votos a 0
+                if(eliminated.contains(i)) { voteCount[i] = 0; continue; }
+
+                if(voteCount[i] >= max) { max = voteCount[i]; }
                 if(voteCount[i] <= min) { min = voteCount[i]; }
             }
 
-            if(max == min) { /* xd */ }
+            int numOfValidVotes = Arrays.stream(voteCount).sum();
+            if(max > (numOfValidVotes / 2.0) || min == max) {
+                for(int i = 0; i < voteCount.length; i++) {
+                    if(voteCount[i] == max) { winners.add(candidates[i]); }
+                }
+
+                goon = false;
+            } else {
+                for(int i = 0; i < voteCount.length; i++) {
+                    if(voteCount[i] == min) { eliminated.add(i); }
+                }
+
+                cont++;
+            }
         }
 
         return winners;
