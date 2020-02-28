@@ -1,14 +1,11 @@
 package AlboriasTales.Chapter1;
 
-// @JUDGE_ID:  1118221  10142  Java  "Australian Voting"
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Scanner;
 import java.util.InputMismatchException;
+import java.util.Scanner;
+import java.util.Arrays;
 
 public class AustralianVoting {
-
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
 
@@ -89,10 +86,11 @@ public class AustralianVoting {
 
         while (!line.isEmpty()) {
             int[] newVotes = new int[numOfCandidates];
-            line = line.replaceAll("\\s+","");
+            line = line.trim(); // prevencion de errores
+            String[] numbers = line.split(" ");
 
             for(int i = 0; i < numOfCandidates; i++) {
-                newVotes[i] = Character.digit(line.charAt(i), 10);
+                newVotes[i] = Integer.parseInt(numbers[i]);
                 if(newVotes[i] == -1) { System.err.println("ESTO NO ES UN NUMERO"); break; }
             }
 
@@ -108,42 +106,60 @@ public class AustralianVoting {
     private static ArrayList<String> getWinner(ArrayList<int[]> votes, String[] candidates) {
         ArrayList<String> winners = new ArrayList<>();
         ArrayList<Integer> eliminated = new ArrayList<>();
-        int[] voteCount;
+        int[] votesOfCandidate;
+
         boolean goon = true;
         int cont = 0;
 
         while(goon) {
-            voteCount = new int[candidates.length];
+            votesOfCandidate = new int[candidates.length];
 
-            for (int[] vote : votes) {
-                voteCount[vote[cont] - 1]++;
+            for(int[] vote : votes) {
+                // (EJ) vote: 3 2 1 4 | cont: 0 | vote[0] = 3
+                // canditato 3, posicion = 3 - 1 = 2 --> candidates[2] == candidato 3
+                votesOfCandidate[vote[cont] - 1]++;
             }
 
             int max = 0, min = candidates.length;
-            for(int i = 0; i < voteCount.length; i++) {
+            for(int i = 0; i < votesOfCandidate.length; i++) {
                 // Si el candidato se ha eliminado, resetamos su contador de votos a 0
-                if(eliminated.contains(i)) { voteCount[i] = 0; continue; }
+                if(eliminated.contains(i)) {
+                    votesOfCandidate[i] = 0; continue;
+                }
 
-                if(voteCount[i] >= max) { max = voteCount[i]; }
-                if(voteCount[i] <= min) { min = voteCount[i]; }
+                if(votesOfCandidate[i] >= max) { max = votesOfCandidate[i]; }
+                if(votesOfCandidate[i] <= min) { min = votesOfCandidate[i]; }
             }
 
-            int numOfValidVotes = Arrays.stream(voteCount).sum();
-            if(max > (numOfValidVotes / 2.0) || min == max) {
-                for(int i = 0; i < voteCount.length; i++) {
-                    if(voteCount[i] == max) { winners.add(candidates[i]); }
+            int numOfValidVotes = Arrays.stream(votesOfCandidate).sum();
+
+            if(max * 2 > numOfValidVotes || min == max) {
+                for(int i = 0; i < votesOfCandidate.length; i++) {
+                    if(votesOfCandidate[i] == max) { winners.add(candidates[i]); }
                 }
 
                 goon = false;
             } else {
-                for(int i = 0; i < voteCount.length; i++) {
-                    if(voteCount[i] == min) { eliminated.add(i); }
+                for(int i = 0; i < votesOfCandidate.length; i++) {
+                    if(votesOfCandidate[i] == min) { eliminated.add(i); }
                 }
 
                 cont++;
             }
+
+            StringBuilder vot = new StringBuilder();
+            for(int v: votesOfCandidate) vot.append(v).append(" ");
+
+            // log("Votos por candidato: " + vot);
+            // log("max: " + max);
+            // log("min: " + min);
         }
 
         return winners;
+    }
+
+
+    public static void log(String line) {
+        System.out.println(line);
     }
 }
