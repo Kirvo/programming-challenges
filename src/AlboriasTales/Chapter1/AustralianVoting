@@ -9,7 +9,7 @@ public class AustralianVoting {
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
 
-        int cases = getCases(input);
+        int cases = input.nextInt();
 
         input.nextLine(); // getBlankLine
 
@@ -22,20 +22,6 @@ public class AustralianVoting {
             winners.forEach(System.out::println);
             System.out.println();
         }
-    }
-
-    private static int getCases(Scanner input) {
-        int cases = -1;
-
-        while (cases == -1) {
-            try {
-                cases = input.nextInt();
-            } catch(InputMismatchException e) {
-                System.err.println("This is not a number, try again!");
-            }
-        }
-
-        return cases;
     }
 
     private static int getNumOfCandidates(Scanner input) {

@@ -1,30 +1,133 @@
 package AlboriasTales;
 
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.Scanner;
-import java.util.Arrays;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
 
-        int cases = getCases(input);
+        int cases = getInt(input);
+        String[] pages, names = null;
+        HashMap<String, List<String>> graph;
+        HashMap<String, Integer> erdosGraph = new HashMap<>();
 
-        input.nextLine(); // getBlankLine
+        input.nextLine();
 
         for(int i = 0; i < cases; i++) {
-            int numOfCandidates = getNumOfCandidates(input);
-            String[] candidates = getCandidates(numOfCandidates, input);
-            ArrayList<int[]> votes = getVotes(numOfCandidates, input);
+            // 1. Recieve data from input
+            String line = input.nextLine().trim(); // prevencion de errores
+            String[] PN = line.split(" ");
 
-            ArrayList<String> winners = getWinner(votes, candidates);
-            winners.forEach(System.out::println);
-            System.out.println();
+            int pagesCount = Integer.parseInt(PN[0]), namesCount = Integer.parseInt(PN[1]);
+
+            pages = getLines(pagesCount, input);
+            names = getLines(namesCount, input);
+
+            // 2. Manage data
+            graph = getAuthorsGraph(pages, names);
+
+            // 3. Run BFS over graph to get Erdos Numbers
+            erdosGraph = new HashMap<>();
+            erdos(erdosGraph, graph, "Erdos, P.", 0);
+        }
+
+
+        for(int i = 0; i < cases; i++) {
+            System.out.println("Scenario " + (i + 1));
+
+            for(String name: names) {
+                if(erdosGraph.get(name) == null) { System.out.println(name + " infinity"); }
+                else { System.out.println(name + " " + erdosGraph.get(name)); }
+            }
         }
     }
 
-    private static int getCases(Scanner input) {
+    private static HashMap<String, List<String>> getAuthorsGraph(String[] pages, String[] names) {
+        HashMap<String, List<String>> graph = new HashMap<>();
+        graph.put("Erdos, P.", new LinkedList<>()); //Erdos is the first node
+
+        List<String> pagesWithoutErdosNumber = new LinkedList<>();
+
+        for(String page: pages) {
+            //Obtenemos los autores de la página a revisar
+            List<String> authorsInPage = getAuthorsInPage(page, names);
+
+            // Actualizamos el grafo añadiendo nodos segun los co-autores de esa pagina
+            if(!checkAuthorOnGraph(authorsInPage, graph)) {
+                //Si no encontramos autores en la pagina que existan en el grafo,
+                //nos guardamos la pagina para revisarla más tarde
+                pagesWithoutErdosNumber.add(page);
+            }
+        }
+
+        // Revisamos de nuevo las páginas anteriores
+        for(String page: pagesWithoutErdosNumber) {
+            List<String> authorsInPage = getAuthorsInPage(page, names);
+
+            // Actualizamos el grafo añadiendo nodos segun los co-autores de esa pagina
+            checkAuthorOnGraph(authorsInPage, graph);
+        }
+
+        return graph;
+    }
+
+    private static List<String> getAuthorsInPage(String page, String[] names) {
+        List<String> authorsInPage = new LinkedList<>();
+        for (String name : names) {
+            if (page.contains(name)) { authorsInPage.add(name); }
+            else if(page.contains("Erdos, P.")) { authorsInPage.add("Erdos, P."); }
+        }
+        return authorsInPage;
+    }
+
+    private static boolean checkAuthorOnGraph(List<String> authors, HashMap<String, List<String>> graph) {
+        List<String> authorsOnGraph = new LinkedList<>(), authorsNotOnGraph = new LinkedList<>();
+
+        for(String author: authors) {
+            if(graph.containsKey(author)) authorsOnGraph.add(author);
+            else authorsNotOnGraph.add(author);
+        }
+
+        if(!authorsOnGraph.isEmpty()) {
+            authorsNotOnGraph.forEach(author -> {
+                // Añadimos un nuevo nodo al grafo
+                graph.put(author, new LinkedList<>());
+                // Actualizamos la lista de cada nodo co-autor
+                authorsOnGraph.forEach(authorOnGraph -> {
+                    graph.get(authorOnGraph).add(author);
+                });
+            });
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static void erdos(HashMap<String, Integer> erdosGraph, HashMap<String, List<String>> graph, String name, int erdosNum) {
+        erdosGraph.put(name, erdosNum);
+
+        List<String> coAuthors = graph.get(name);
+        coAuthors.forEach(coAuthor -> {
+            erdos(erdosGraph, graph, coAuthor, erdosNum + 1);
+        });
+    }
+
+    public static void log(String line) {
+        System.out.println(line);
+    }
+
+    public static String[] getLines(int linesCount, Scanner input) {
+        String[] lines = new String[linesCount];
+
+        for(int i = 0; i < linesCount; i++) {
+            lines[i] = input.nextLine();
+        }
+
+        return lines;
+    }
+
+    public static int getInt(Scanner input) {
         int cases = -1;
 
         while (cases == -1) {
@@ -36,130 +139,5 @@ public class Main {
         }
 
         return cases;
-    }
-
-    private static int getNumOfCandidates(Scanner input) {
-        int numOfCandidates = -1;
-
-        while(numOfCandidates > 20 || numOfCandidates == -1) {
-            try {
-                numOfCandidates = input.nextInt();
-
-                if(numOfCandidates > 20) {
-                    System.err.println("There can only be 20 or less candidates, try again!");
-                }
-
-            } catch(InputMismatchException e) {
-                System.err.println("This is not a number, try again!");
-            }
-        }
-
-        return numOfCandidates;
-    }
-
-    private static String[] getCandidates(int numOfCandidates, Scanner input) {
-        String[] candidates = new String[numOfCandidates];
-        int count = 0;
-
-        while(count < numOfCandidates) {
-            String name = "ERROR";
-
-            while (name.equals("ERROR")) {
-                name = input.nextLine();
-                if(name.length() == 0) name = "ERROR";
-
-                if(name.length() > 80) {
-                    System.err.println("Names must be less than 80 characters. Try again");
-                    name = "ERROR";
-                }
-
-            }
-            candidates[count++] = name;
-        }
-
-        return candidates;
-    }
-
-    private static ArrayList<int[]> getVotes(int numOfCandidates, Scanner input) {
-        ArrayList<int[]> votes = new ArrayList<>();
-        String line = input.nextLine();
-
-        while (!line.isEmpty()) {
-            int[] newVotes = new int[numOfCandidates];
-            line = line.trim(); // prevencion de errores
-            String[] numbers = line.split(" ");
-
-            for(int i = 0; i < numOfCandidates; i++) {
-                newVotes[i] = Integer.parseInt(numbers[i]);
-                if(newVotes[i] == -1) { System.err.println("ESTO NO ES UN NUMERO"); break; }
-            }
-
-            votes.add(newVotes); 
-            line = input.nextLine();
-
-            if(votes.size() >= 1000) { break; }
-        }
-
-        return votes;
-    }
-
-    private static ArrayList<String> getWinner(ArrayList<int[]> votes, String[] candidates) {
-        ArrayList<String> winners = new ArrayList<>();
-        ArrayList<Integer> eliminated = new ArrayList<>();
-        int[] votesOfCandidate;
-
-        boolean goon = true;
-        int cont = 0;
-
-        while(goon) {
-            votesOfCandidate = new int[candidates.length];
-
-            for(int[] vote : votes) {
-                // (EJ) vote: 3 2 1 4 | cont: 0 | vote[0] = 3
-                // canditato 3, posicion = 3 - 1 = 2 --> candidates[2] == candidato 3
-                votesOfCandidate[vote[cont] - 1]++;
-            }
-
-            int max = 0, min = candidates.length;
-            for(int i = 0; i < votesOfCandidate.length; i++) {
-                // Si el candidato se ha eliminado, resetamos su contador de votos a 0
-                if(eliminated.contains(i)) {
-                    votesOfCandidate[i] = 0; continue;
-                }
-
-                if(votesOfCandidate[i] >= max) { max = votesOfCandidate[i]; }
-                if(votesOfCandidate[i] <= min) { min = votesOfCandidate[i]; }
-            }
-
-            int numOfValidVotes = Arrays.stream(votesOfCandidate).sum();
-
-            if(max * 2 > numOfValidVotes || min == max) {
-                for(int i = 0; i < votesOfCandidate.length; i++) {
-                    if(votesOfCandidate[i] == max) { winners.add(candidates[i]); }
-                }
-
-                goon = false;
-            } else {
-                for(int i = 0; i < votesOfCandidate.length; i++) {
-                    if(votesOfCandidate[i] == min) { eliminated.add(i); }
-                }
-
-                cont++;
-            }
-
-            StringBuilder vot = new StringBuilder();
-            for(int v: votesOfCandidate) vot.append(v).append(" ");
-
-           // log("Votos por candidato: " + vot);
-           // log("max: " + max);
-           // log("min: " + min);
-        }
-
-        return winners;
-    }
-
-
-    public static void log(String line) {
-        System.out.println(line);
     }
 }
